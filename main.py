@@ -7,6 +7,8 @@ RECT_COORDS = (450, 25, 600, 55)
 
 def parseFromDirectory(input_dir, output_dir):
     for file in os.listdir(input_dir):
+        if not file.endswith('.pdf'):
+            continue
         filename = file.split('.')[0]
         print(f"Processing file: {filename}")
         path_file = os.sep.join([input_dir, f"{filename}.pdf"])
