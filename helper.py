@@ -3,9 +3,11 @@ import os
 import sys
 
 # Coordinates for the white rectangle (x0, y0, x1, y1)
-RECT_COORDS = (450, 25, 600, 55)
+RECT_COORDS = (350, 25, 600, 55)
 
 def parseFromDirectory(input_dir, output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     for file in os.listdir(input_dir):
         if not file.endswith('.pdf'):
             continue

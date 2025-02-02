@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesador de PDFs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success { background-color: #e7f3e7; }
+        .error { background-color: #f3e7e7; }
+        .processing { background-color: #e7eef3; }
+        #downloadBtn {
+            display: none;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Procesador de PDFs</h1>
+    
+    <h2>Instrucciones:</h2>
+    <ul>
+        <li>Comprima todos sus archivos PDF en un archivo ZIP</li>
+        <li>Suba el archivo ZIP utilizando el botón "Seleccionar archivo"</li>
+        <li>Espere a que el proceso termine</li>
+        <li>Descargue sus archivos procesados</li>
+    </ul>
+
+    <!-- Formulario para subir ZIP -->
+    <form id="uploadForm">
+        <input type="file" id="fileInput" accept=".zip" />
+        <button type="submit">Subir</button>
+    </form>
+
+    <div id="uploadStatus" class="status processing"></div>
+    <button id="downloadBtn">Descargar archivos procesados</button>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const status = document.getElementById('uploadStatus');
+        const downloadBtn = document.getElementById('downloadBtn');
+        let sessionId = null;
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            const fileInput = document.getElementById('fileInput');
+            
+            if (!fileInput.files.length) {
+                showStatus('Por favor seleccione un archivo', 'error');
+                return;
+            }
+
+            // Primero: Subiendo archivos...
+            showStatus('Subiendo archivos...', 'processing');
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error);
+
+                // Archivos subidos y corregidos en el backend
+                showStatus('Archivos subidos...', 'success');
+                showStatus('Corrigiendo archivos...', 'processing');
+                
+                // Esperar un momento, luego notificar el éxito
+                setTimeout(() => {
+                    showStatus('¡Éxito! Archivos corregidos', 'success');
+                    sessionId = data.session_id;
+                    downloadBtn.style.display = 'block';
+                }, 1000);
+
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                downloadBtn.style.display = 'none';
+            }
+        };
+
+        downloadBtn.onclick = () => {
+            if (sessionId) {
+                window.location.href = `/download/${sessionId}`;
+            }
+        };
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.style.display = 'block';
+            status.className = `status ${type}`;
+        }
+    </script>
+</body>
+</html>
