@@ -3,7 +3,7 @@ import os
 import sys
 
 # Coordinates for the white rectangle (x0, y0, x1, y1)
-RECT_COORDS = (350, 25, 600, 55)
+RECT_COORDS = (392, 17, 590, 53)
 
 def parseFromDirectory(input_dir, output_dir):
     if not os.path.exists(output_dir):
