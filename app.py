@@ -24,16 +24,21 @@ def upload_file():
 
     if not file.filename.endswith('.zip'):
         return jsonify({'error': 'El archivo debe ser .zip'}), 400
-
+        
+    # Get the file type from form data
+    file_type = request.form.get('type', 'default')
+    
     # Create unique working directory
     session_id = str(uuid.uuid4())
     work_dir = os.path.join(UPLOAD_FOLDER, session_id)
     os.makedirs(work_dir)
 
-    # Store original filename
+    # Store original filename and file type
     original_filename = file.filename
     with open(os.path.join(work_dir, 'original_filename.txt'), 'w') as f:
         f.write(original_filename)
+    with open(os.path.join(work_dir, 'file_type.txt'), 'w') as f:
+        f.write(file_type)
 
     # Save and extract zip
     zip_path = os.path.join(work_dir, 'input.zip')
@@ -43,6 +48,10 @@ def upload_file():
     os.makedirs(extract_dir, exist_ok=True)
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         for member in zip_ref.namelist():
+            # Skip macOS system files and directories
+            if '__MACOSX' in member or member.startswith('._') or os.path.basename(member).startswith('._'):
+                continue
+                
             filename = os.path.basename(member)
             if not filename:
                 continue
@@ -55,8 +64,8 @@ def upload_file():
     output_dir = os.path.join(work_dir, 'output')
     os.makedirs(output_dir, exist_ok=True)
 
-    # Directly call parseFromDirectory
-    parseFromDirectory(extract_dir, output_dir)
+    # Call parseFromDirectory with file_type parameter
+    parseFromDirectory(extract_dir, output_dir, file_type)
 
     # Zip the modified PDFs from output_dir
     result_zip = os.path.join(work_dir, 'output.zip')
@@ -74,7 +83,8 @@ def upload_file():
 
     return jsonify({
         'success': True,
-        'session_id': session_id
+        'session_id': session_id,
+        'file_type': file_type
     })
 
 @app.route('/download/<session_id>')
